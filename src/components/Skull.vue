@@ -2,10 +2,7 @@
     <div>
         <h1>Skull</h1>
         <p>{{ msg }}</p>
-        <button type="button" class="btn btn-secondary">
-            Skull button
-        </button>
-
+        
     </div>
 </template>
  

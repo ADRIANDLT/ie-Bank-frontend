@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "msedge",
+            "type": "chrome",
             "request": "launch",
             "name": "IE Bank Frontend",
-            "url": "http://localhost:8080",
+            "url": "http://localhost:8080/",
             "webRoot": "${workspaceFolder}",
             "breakOnLoad": true,
             "pathMapping": {
