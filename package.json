@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
+    "serve:uat": "vue-cli-service serve --mode uat",
     "build": "vue-cli-service build",
-    "buildenv": "vue-cli-service build --mode myenv"
+    "build:uat": "vue-cli-service build --mode uat"
   },
   "dependencies": {
     "@vue/cli": "^5.0.8",
