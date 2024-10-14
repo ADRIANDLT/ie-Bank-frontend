@@ -2,12 +2,11 @@ name: ie-bank-frontend
 
 on:
   push:
-    branches:
-      - dev
-      - main
+    branches-ignore:
+      - main         # Except for main branch, we trigger this workflow to deploy on DEV environment for any push on any branch.
   pull_request:
-    branches:
-      - main  # Run on pull requests to the main branch
+    types:
+      - closed       # We also check later if it was merged, so simply closing a PR won't trigger a deployment
   workflow_dispatch:
 
 jobs:
@@ -34,21 +33,22 @@ jobs:
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ github.ref == 'refs/heads/dev' && 'node-app-dev' || 'node-app-uat' }}
-          path: ${{ github.ref == 'refs/heads/dev' && 'dist-dev/' || 'dist-uat/' }}
+          name: ${{ github.ref == 'refs/heads/main' && 'node-app-uat' || 'node-app-dev' }}
+          path: ${{ github.ref == 'refs/heads/main' && 'dist-uat/' || 'dist-dev/' }}
 
-  deploy:
+  deploy-dev:
     runs-on: ubuntu-latest
     needs: build
+    if: github.event_name == 'push' && github.ref != 'refs/heads/main'
     environment:
-      name: ${{ github.event_name == 'pull_request' && github.base_ref == 'refs/heads/main' || github.ref == 'refs/heads/main' && 'UAT' || 'Development' }}
+      name: 'Development'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: ${{ github.ref == 'refs/heads/main' && 'node-app-uat' || 'node-app-dev' }}
+          name: 'node-app-dev'
 
       - uses: azure/login@v2
         with:
@@ -58,5 +58,30 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ github.ref == 'refs/heads/main' && 'adelatorre-frontend-uat' || 'adelatorre-frontend-dev' }}
+          app-name: 'adelatorre-frontend-dev'
+          package: .
+
+  deploy-uat:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' || github.event_name == 'workflow_dispatch'
+    environment:
+      name: 'UAT'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: 'node-app-uat'
+
+      - uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: 'Deploy to Azure Web App'
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'adelatorre-frontend-uat'
           package: .
